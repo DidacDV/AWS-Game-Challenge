@@ -88,21 +88,24 @@ class LocalPlayer(Player):
         dx = pyxel.mouse_x - self.x
         dy = pyxel.mouse_y - self.y
         self.angle = math.atan2(dy, dx)
-
+        new_x = self.x
+        new_y = self.y
         if pyxel.btnp(pyxel.KEY_W, 1, 1):
-            self.y -= 1
+            new_y -= 1
             self.direction = Direction.UP
         if pyxel.btnp(pyxel.KEY_A, 1, 1):
-            self.x -= 1
+            new_x -= 1
             self.direction = Direction.LEFT
         if pyxel.btnp(pyxel.KEY_S, 1, 1):
-            self.y += 1
+            new_y += 1
             self.direction = Direction.DOWN
         if pyxel.btnp(pyxel.KEY_D, 1, 1):
-            self.x += 1
+            new_x += 1
             self.direction = Direction.RIGHT
-        self.app.publish_position(self.x,self.y)
-
+        if new_x != self.x or new_y != self.y:
+            self.x = new_x
+            self.y = new_y
+            self.app.publish_position(self.x,self.y)
 
 class RemotePlayer(Player):
     def __init__(self, posX, posY, width, height, colour, Scene):

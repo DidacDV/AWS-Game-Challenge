@@ -44,6 +44,7 @@ class App:
             self.client_socket.sendto(json.dumps(message).encode("utf-8"), self.server_address)
             self.last_publish_time = current_time
 
+
     def receive_positions(self):
         """Recibe y actualiza las posiciones de los jugadores remotos desde el servidor."""
         try:

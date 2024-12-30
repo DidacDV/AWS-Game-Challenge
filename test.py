@@ -1,52 +1,108 @@
+import json
+import time
+
 import pyxel
+import paho.mqtt.client as mqtt
+
+import Characters
+from Objects import Bullet, Heal
+from Characters import LocalPlayer, RemotePlayer, Entity
+from Scene import Scene
 import math
 from background import Background
 from classMenu import ClassMenu
 
-GUN_LENGTH = 10
-GUN_ADDED_X = 8
-GUN_ADDED_Y = 22
-BODY_WIDTH = 2  # Width of the character body
-PINK = 8
-
-
-
-
 class App:
-    def __init__(self):
-        self.started = False
-        self.class_menu = ClassMenu()
+    def __init__(self, broker, port, topic_publish, topic_subscribe):
         pyxel.init(160, 120)
-        pyxel.load("player.pyxres")
+        pyxel.load("assets.pyxres")
+        self.scene = Scene({"x": 0, "y": 0})
+        self.last_publish_time = time.time()
+        self.publish_interval = 0.05
         self.x = 50
         self.y = 50
         self.bg = Background()
         self.class_selected = -1
+        self.started = False
+        self.class_menu = ClassMenu()
+        # Configuración MQTT
+        self.client = mqtt.Client()
+        self.client.on_message = self.on_message
+        self.client.connect(broker, port, 60)
+        self.client.subscribe(topic_subscribe, qos=0)  # Reducir QoS a 0 para minimizar latencia
+        self.topic_publish = topic_publish
+        # Iniciar cliente MQTT
+        self.client.loop_start()
+        self.projectiles = []
+
+
+
+        local_player = LocalPlayer(80, 60, 8, 8, 2, self)
+        remote_player = RemotePlayer(50, 50, 8, 8, 8, self.scene)
+        self.players = [local_player, remote_player]
+
+        self.fullscreen = False
+        pyxel.fullscreen(self.fullscreen)
+        pyxel.mouse(True)
         pyxel.run(self.update, self.draw)
-    
+
+
+
+    def on_message(self, client, userdata, msg):
+        try:
+            data = json.loads(msg.payload)
+            # Actualizar la posición objetivo del jugador remoto
+            if "x" in data and "y" in data:
+                self.players[1].x = data["x"]
+                self.players[1].y = data["y"]
+                print(f"Jugador remoto actualizado: {self.players[1].x,self.players[1].y}")
+        except json.JSONDecodeError as e:
+            print(f"Error al decodificar el mensaje: {e}")
+
+    def publish_position(self,x,y):
+        # Publicar posición local al broker a intervalos
+        current_time = time.time()
+        if current_time - self.last_publish_time >= self.publish_interval:
+            self.client.publish(self.topic_publish, json.dumps({"x": x, "y": y}), qos=0)
+            self.last_publish_time = current_time
+
     def update(self):
+        self.bg.update()
         if not self.started:
             if self.class_menu.update_menu():
                 self.started = True
                 self.class_selected = self.class_menu.get_selected_class()
         else:
-            print(self.class_selected)
-            self.update_game()
-        self.bg.update()
+            #Update all characters
+            for player in self.players:
+                player.update()
 
-    def update_game(self):
-        if pyxel.btnp(pyxel.KEY_Q):
+            #Update bullets
+            self.projectiles = [b for b in self.projectiles if b.is_active()]
+            for projectile in self.projectiles:
+                projectile.update()
+                for character in self.players:
+                    if character != projectile.owner:
+                        if character.hit(projectile):
+                            print("hit")
+            #Scene update
+            self.scene.update(self.players[0])
+
+
+        #App updates
+        if pyxel.btnp(pyxel.KEY_F11):
+            self.fullscreen = not self.fullscreen
+            pyxel.fullscreen(self.fullscreen)
+        if pyxel.btnp(pyxel.KEY_Q, 1, 1):
             pyxel.quit()
-        if pyxel.btn(pyxel.KEY_LEFT):
-            self.x -= 2
-        if pyxel.btn(pyxel.KEY_RIGHT):
-            self.x += 2
-        if pyxel.btn(pyxel.KEY_UP):
-            self.y -= 2
-        if pyxel.btn(pyxel.KEY_DOWN):
-            self.y += 2
-        self.bg.update()
-    
+        if pyxel.btnr(pyxel.MOUSE_BUTTON_LEFT):
+            self.projectiles.append(Bullet(self.players[0].x, self.players[0].y, pyxel.mouse_x, pyxel.mouse_y, 4,
+                                           self.players[0]))
+        if pyxel.btnr(pyxel.MOUSE_BUTTON_RIGHT):
+            self.projectiles.append(Heal(self.players[0].x, self.players[0].y, pyxel.mouse_x, pyxel.mouse_y, 4,
+                                         self.players[0]))
+
+
     def draw(self):
         pyxel.cls(0)
         self.bg.draw()
@@ -54,33 +110,31 @@ class App:
         if not self.started:
             self.class_menu.draw_menu()
         else: 
+            self.scene.draw()
             self.draw_game()
+            for character in self.players:
+                character.draw()
 
-    def draw_game(self):
-        #calculate for right and left
-        values_right = calculateGunPosition(self.x + BODY_WIDTH, self.y, pyxel.mouse_x, pyxel.mouse_y)
-        values_left = calculateGunPosition(self.x - BODY_WIDTH, self.y, pyxel.mouse_x, pyxel.mouse_y)
-            
-        gun_x_right = values_right[0]
-        gun_y_right = values_right[1]
-        gun_x_left = values_left[0]
-        gun_y_left = values_left[1]
-            
-        #draw right
-        pyxel.line(self.x + BODY_WIDTH - 1 + GUN_ADDED_X, self.y + GUN_ADDED_Y, gun_x_right, gun_y_right, PINK)
-        pyxel.line(self.x + BODY_WIDTH + GUN_ADDED_X, self.y + 5 + GUN_ADDED_Y, gun_x_right, gun_y_right, PINK)
-            
-        #draw left
-        pyxel.line(self.x - BODY_WIDTH + GUN_ADDED_X, self.y + GUN_ADDED_Y, gun_x_left, gun_y_left, PINK)
-        pyxel.line(self.x - BODY_WIDTH + GUN_ADDED_X, self.y + 5 + GUN_ADDED_Y, gun_x_left, gun_y_left, PINK)
-            
-        pyxel.blt(self.x, self.y, 0, 0, 0, 32, 40, 0)
+            for projectile in self.projectiles:
+                projectile.draw()
+
+broker = "35.180.116.17"  # Cambiar por la IP del broker Mosquitto
+port = 1883
+
+# Configuración para cada jugador
+# Jugador 1:
+# topic_publish = "game/player1"
+# topic_subscribe = "game/player2"
+
+# Jugador 2:
 
 
-def calculateGunPosition(x1, y1, mouse_x, mouse_y):
-    angle = math.atan2(mouse_y - y1, mouse_x - x1)
-    gun_x = x1 + GUN_ADDED_X + GUN_LENGTH * math.cos(angle)
-    gun_y = y1 + GUN_ADDED_Y + GUN_LENGTH * math.sin(angle)
-    return [gun_x, gun_y]
+# Cambiar según el jugador
+topic_publish = "game/player2"
+topic_subscribe = "game/player1"
 
-App()
+
+
+
+App(broker, port, topic_publish, topic_subscribe)
+

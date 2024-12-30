@@ -100,6 +100,6 @@ class App:
 # Configuración del cliente
 server_ip = "13.39.48.250"  # IP pública del servidor EC2
 server_port = 12345  # Puerto del servidor
-player_id = "player1"  # Identificador único del jugador
+player_id = "player2"  # Identificador único del jugador
 
 App(server_ip, server_port, player_id)

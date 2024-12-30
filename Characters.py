@@ -84,28 +84,18 @@ class LocalPlayer(Player):
         self.draw_health_bar()
 
     def update(self):
+        dx = 0
+        dy = 0
+        if pyxel.btn(pyxel.KEY_W): dy -= 1
+        if pyxel.btn(pyxel.KEY_S): dy += 1
+        if pyxel.btn(pyxel.KEY_A): dx -= 1
+        if pyxel.btn(pyxel.KEY_D): dx += 1
 
-        dx = pyxel.mouse_x - self.x
-        dy = pyxel.mouse_y - self.y
-        self.angle = math.atan2(dy, dx)
-        new_x = self.x
-        new_y = self.y
-        if pyxel.btnp(pyxel.KEY_W, 1, 1):
-            new_y -= 1
-            self.direction = Direction.UP
-        if pyxel.btnp(pyxel.KEY_A, 1, 1):
-            new_x -= 1
-            self.direction = Direction.LEFT
-        if pyxel.btnp(pyxel.KEY_S, 1, 1):
-            new_y += 1
-            self.direction = Direction.DOWN
-        if pyxel.btnp(pyxel.KEY_D, 1, 1):
-            new_x += 1
-            self.direction = Direction.RIGHT
-        if new_x != self.x or new_y != self.y:
-            self.x = new_x
-            self.y = new_y
-            self.app.publish_position(self.x,self.y)
+        if dx != 0 or dy != 0:
+            self.x += dx
+            self.y += dy
+            # Llama a send_position en lugar de publish_position
+            self.app.send_position()
 
 class RemotePlayer(Player):
     def __init__(self, posX, posY, width, height, colour, Scene):

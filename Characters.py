@@ -74,8 +74,9 @@ class Player(Entity):
         pyxel.rect(self.x, self.y - 5, filled_width, bar_height, 11)  # Green foreground
 
 class LocalPlayer(Player):
-    def __init__(self, posX, posY, width, height, colour):
+    def __init__(self, posX, posY, width, height, colour, App):
         super().__init__(posX, posY, width, height, colour, 80)
+        self.app = App
 
 
     def draw(self):
@@ -83,6 +84,7 @@ class LocalPlayer(Player):
         self.draw_health_bar()
 
     def update(self):
+
         dx = pyxel.mouse_x - self.x
         dy = pyxel.mouse_y - self.y
         self.angle = math.atan2(dy, dx)
@@ -99,6 +101,7 @@ class LocalPlayer(Player):
         if pyxel.btnp(pyxel.KEY_D, 1, 1):
             self.x += 1
             self.direction = Direction.RIGHT
+        self.app.publish_position(self.x,self.y)
 
 
 class RemotePlayer(Player):

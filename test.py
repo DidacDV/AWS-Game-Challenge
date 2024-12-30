@@ -111,7 +111,6 @@ class App:
             self.class_menu.draw_menu()
         else: 
             self.scene.draw()
-            self.draw_game()
             for character in self.players:
                 character.draw()
 

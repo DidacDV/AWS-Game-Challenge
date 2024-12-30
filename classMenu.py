@@ -2,7 +2,7 @@ import pyxel
 
 class ClassMenu:
     def __init__(self):
-        self.selected_class = 0
+        self.selected_class = -2
 
     def update_menu(self):
         if pyxel.btnp(pyxel.KEY_DOWN):
@@ -15,11 +15,12 @@ class ClassMenu:
 
     def select_sprite_class(self):
         if self.selected_class == 0:
-            return [14, 45, 18, 23] #start point in x, start point in y, width and height
+            return [12, 42, 27, 29] #start point in x, start point in y, width and height
         elif self.selected_class == 1:
-            return [17, 100, 19, 11]
+            return [24, 18, 20, 14]
         elif self.selected_class == 2:
-            return [19, 74, 20, 20]
+            return [20, 72, 24, 21]
+
         else:
             return [0, 0, 0, 0]
 
@@ -36,14 +37,13 @@ class ClassMenu:
                 sprite_y = 30 + (20 - values[3]) // 2  #center the sprite vertically within a 20px height
                 
                 #background of the sprite
-                pyxel.rect(sprite_x - 2, sprite_y - 2, values[2] + 4, values[3] + 4, 3)
                 #actual sprite
-                pyxel.blt(sprite_x, sprite_y, 0, values[0], values[1], values[2], values[3], 0)  #draw the symbol of the class
+                pyxel.blt(sprite_x, sprite_y, 1, values[0], values[1], values[2], values[3], 1)  #draw the symbol of the class
                 #border around sprite
                 pyxel.rectb(sprite_x - 2, sprite_y - 2, values[2] + 4, values[3] + 4, 7)
-                color = 7
-            else:
                 color = 3
+            else:
+                color = 7
             pyxel.text(option_x, 60 + i * 10, option, color)  #text of the classes goes lower
 
     def get_selected_class(self):

@@ -8,7 +8,9 @@ import Characters
 from Objects import Bullet, Heal
 from Characters import LocalPlayer, RemotePlayer, Entity
 from Scene import Scene
-
+import math
+from background import Background
+from classMenu import ClassMenu
 
 class App:
     def __init__(self, broker, port, topic_publish, topic_subscribe):
@@ -17,7 +19,12 @@ class App:
         self.scene = Scene({"x": 0, "y": 0})
         self.last_publish_time = time.time()
         self.publish_interval = 0.05
-
+        self.x = 50
+        self.y = 50
+        self.bg = Background()
+        self.class_selected = -1
+        self.started = False
+        self.class_menu = ClassMenu()
         # Configuración MQTT
         self.client = mqtt.Client()
         self.client.on_message = self.on_message
@@ -60,20 +67,26 @@ class App:
             self.last_publish_time = current_time
 
     def update(self):
-        #Update all characters
-        for player in self.players:
-            player.update()
+        self.bg.update()
+        if not self.started:
+            if self.class_menu.update_menu():
+                self.started = True
+                self.class_selected = self.class_menu.get_selected_class()
+        else:
+            #Update all characters
+            for player in self.players:
+                player.update()
 
-        #Update bullets
-        self.projectiles = [b for b in self.projectiles if b.is_active()]
-        for projectile in self.projectiles:
-            projectile.update()
-            for character in self.players:
-                if character != projectile.owner:
-                    if character.hit(projectile):
-                        print("hit")
-        #Scene update
-        self.scene.update(self.players[0])
+            #Update bullets
+            self.projectiles = [b for b in self.projectiles if b.is_active()]
+            for projectile in self.projectiles:
+                projectile.update()
+                for character in self.players:
+                    if character != projectile.owner:
+                        if character.hit(projectile):
+                            print("hit")
+            #Scene update
+            self.scene.update(self.players[0])
 
 
         #App updates
@@ -92,12 +105,18 @@ class App:
 
     def draw(self):
         pyxel.cls(0)
-        self.scene.draw()
-        for character in self.players:
-            character.draw()
+        self.bg.draw()
 
-        for projectile in self.projectiles:
-            projectile.draw()
+        if not self.started:
+            self.class_menu.draw_menu()
+        else: 
+            self.scene.draw()
+            self.draw_game()
+            for character in self.players:
+                character.draw()
+
+            for projectile in self.projectiles:
+                projectile.draw()
 
 broker = "35.180.116.17"  # Cambiar por la IP del broker Mosquitto
 port = 1883
@@ -115,4 +134,7 @@ topic_publish = "game/player2"
 topic_subscribe = "game/player1"
 
 
+
+
 App(broker, port, topic_publish, topic_subscribe)
+

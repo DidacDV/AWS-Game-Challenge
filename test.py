@@ -47,8 +47,8 @@ class App:
             # Actualizar la posición objetivo del jugador remoto
             if "x" in data and "y" in data:
                 self.players[1].x = data["x"]
-                self.players[2].y = data["y"]
-                print(f"Jugador remoto actualizado: {self.remote_target}")
+                self.players[1].y = data["y"]
+                print(f"Jugador remoto actualizado: {self.players[1].x,self.players[1].y}")
         except json.JSONDecodeError as e:
             print(f"Error al decodificar el mensaje: {e}")
 

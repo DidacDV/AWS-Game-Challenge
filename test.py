@@ -10,7 +10,8 @@ from Characters import LocalPlayer, RemotePlayer, Entity
 from Scene import Scene
 import math
 from background import Background
-from classMenu import ClassMenu
+from ClassMenu import ClassMenu
+from Inventory import Inventory
 
 class App:
     def __init__(self, broker, port, topic_publish, topic_subscribe):
@@ -25,6 +26,7 @@ class App:
         self.class_selected = -1
         self.started = False
         self.class_menu = ClassMenu()
+        self.inventory = Inventory()
         # Configuración MQTT
         self.client = mqtt.Client()
         self.client.on_message = self.on_message
@@ -108,6 +110,7 @@ class App:
         self.bg.draw()
 
         if not self.started:
+            self.inventory.draw()
             self.class_menu.draw_menu()
         else: 
             self.scene.draw()

@@ -2,6 +2,7 @@ extends CharacterBody2D
 
 const SPEED = 130.0
 const JUMP_VELOCITY = -300.0
+@onready var sprite = $AnimatedSprite2D
 
 var remote_player : Node2D
 
@@ -18,9 +19,16 @@ func _physics_process(delta: float) -> void:
 		velocity.y = JUMP_VELOCITY
 
 	# Get the input direction and handle the movement/deceleration.
-	var direction := Input.get_axis("ui_left", "ui_right")
+	var direction := 0.0
+	if Input.is_action_pressed("moveRight"):
+		direction = 1.0
+		print("right")
+	if Input.is_action_pressed("moveLeft"):
+		direction = -1.0
+		print("left")
 	if direction:
 		velocity.x = direction * SPEED
+		sprite.flip_h = direction < 0
 	else:
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 

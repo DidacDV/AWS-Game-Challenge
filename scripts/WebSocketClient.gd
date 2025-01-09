@@ -3,6 +3,7 @@ class_name WebSocketClient
 
 var socket = WebSocketPeer.new()
 var last_state = WebSocketPeer.STATE_CLOSED
+var json_parser = JSON.new()
 
 signal connected_to_server()
 signal connection_closed()
@@ -17,7 +18,6 @@ func poll() -> void:
 	if last_state != state:
 		last_state = state
 		if state == socket.STATE_OPEN:
-			print("it connected")
 			connected_to_server.emit()
 		elif state == socket.STATE_CLOSED:
 			connection_closed.emit()
@@ -57,3 +57,41 @@ func get_socket() -> WebSocketPeer:
 	
 func _process(delta):
 	poll()
+
+func create_lobby(lobby_id: String) -> void:
+	var message = {
+		"action": "create_lobby",
+		"lobbyId": lobby_id
+		}
+	send(message)
+
+func join_lobby(lobby_id: String) -> void:
+	var message = {
+		"action": "join_lobby",
+		"lobbyId": lobby_id
+		}
+	send(message)
+
+func send_lobby_message(lobby_id: String, message_payload: String) -> void:
+	var message = {
+		"action": "send_message",
+		"lobbyId": lobby_id,
+		"payload": message_payload 
+		}
+	send(message)
+
+func _on_message_received(message: Variant) -> void:
+	var data
+	if typeof(message) == TYPE_DICTIONARY:
+		data = message
+	elif typeof(message) == TYPE_STRING:
+		var result = json_parser.parse(message)
+		if result.error == OK:
+			data = result.result
+	else:
+		data = null
+	
+	if data != null and typeof(data) == TYPE_DICTIONARY:
+		print("Received valid message: %s" % var_to_str(data))
+	else:
+		print("Invalid message format: %s" % var_to_str(message))

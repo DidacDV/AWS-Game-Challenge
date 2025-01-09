@@ -1,13 +1,11 @@
-[gd_scene load_steps=17 format=4 uid="uid://llo45beu7e5v"]
+[gd_scene load_steps=15 format=4 uid="uid://llo45beu7e5v"]
 
 [ext_resource type="PackedScene" uid="uid://dmj60dv47hmgg" path="res://scenes/player.tscn" id="1_2j2ko"]
 [ext_resource type="Script" path="res://scripts/scene.gd" id="1_wjeb6"]
 [ext_resource type="Texture2D" uid="uid://ifkep2qxbqx2" path="res://assets/sprites/world_tileset.png" id="2_5b18r"]
 [ext_resource type="PackedScene" uid="uid://clw2h3lqxuqmi" path="res://scenes/platform.tscn" id="3_mwslm"]
-[ext_resource type="Script" path="res://scripts/remote-player.gd" id="4_4d0g4"]
 [ext_resource type="PackedScene" uid="uid://cur5nge3tnewa" path="res://scenes/coin.tscn" id="4_v45i7"]
 [ext_resource type="PackedScene" uid="uid://cq7ujfkioflc2" path="res://scenes/killzone.tscn" id="6_qtrvc"]
-[ext_resource type="Script" path="res://scripts/WebSocketClient.gd" id="8_s8n3g"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4r1wr"]
 texture = ExtResource("2_5b18r")
@@ -284,11 +282,6 @@ limit_bottom = 120
 limit_smoothed = true
 position_smoothing_enabled = true
 
-[node name="RemotePlayer" parent="." instance=ExtResource("1_2j2ko")]
-position = Vector2(-23, 15)
-collision_layer = 1
-script = ExtResource("4_4d0g4")
-
 [node name="killzone" parent="." instance=ExtResource("6_qtrvc")]
 position = Vector2(0, 96)
 
@@ -312,9 +305,4 @@ libraries = {
 }
 autoplay = "move"
 
-[node name="WebSocketClient" type="Node" parent="."]
-script = ExtResource("8_s8n3g")
-
 [connection signal="body_entered" from="Coins/coin" to="Coins/coin" method="_on_body_entered"]
-[connection signal="connected_to_server" from="WebSocketClient" to="." method="_on_websocket_client_connected_to_server"]
-[connection signal="connection_closed" from="WebSocketClient" to="." method="_on_web_socket_handler_connection_closed"]

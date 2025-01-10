@@ -1,9 +1,10 @@
-[gd_scene load_steps=15 format=4 uid="uid://llo45beu7e5v"]
+[gd_scene load_steps=16 format=4 uid="uid://llo45beu7e5v"]
 
 [ext_resource type="PackedScene" uid="uid://dmj60dv47hmgg" path="res://scenes/player.tscn" id="1_2j2ko"]
-[ext_resource type="Script" path="res://scripts/scene.gd" id="1_wjeb6"]
+[ext_resource type="Script" path="res://scripts/game.gd" id="1_wjeb6"]
 [ext_resource type="Texture2D" uid="uid://ifkep2qxbqx2" path="res://assets/sprites/world_tileset.png" id="2_5b18r"]
 [ext_resource type="PackedScene" uid="uid://clw2h3lqxuqmi" path="res://scenes/platform.tscn" id="3_mwslm"]
+[ext_resource type="Script" path="res://scripts/local-player.gd" id="4_ojl5t"]
 [ext_resource type="PackedScene" uid="uid://cur5nge3tnewa" path="res://scenes/coin.tscn" id="4_v45i7"]
 [ext_resource type="PackedScene" uid="uid://cq7ujfkioflc2" path="res://scenes/killzone.tscn" id="6_qtrvc"]
 
@@ -274,6 +275,7 @@ tile_set = SubResource("TileSet_ifi0i")
 
 [node name="Player" parent="." instance=ExtResource("1_2j2ko")]
 position = Vector2(1, 7)
+script = ExtResource("4_ojl5t")
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
 position = Vector2(-1, -7)
@@ -304,9 +306,5 @@ libraries = {
 "": SubResource("AnimationLibrary_qfo1n")
 }
 autoplay = "move"
-
-[node name="RemotePlayer" parent="." instance=ExtResource("1_2j2ko")]
-position = Vector2(-96, 11)
-script = null
 
 [connection signal="body_entered" from="Coins/coin" to="Coins/coin" method="_on_body_entered"]

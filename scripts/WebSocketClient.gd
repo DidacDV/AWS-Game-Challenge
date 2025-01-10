@@ -10,6 +10,7 @@ signal connected_to_server()
 signal connection_closed()
 signal message_received(message: Variant)
 signal position_update(playerId: String, newPosition: Vector2)
+signal player_joined()
 
 
 func _ready():
@@ -136,6 +137,8 @@ func _on_message_received(message: Variant) -> void:
 						print("Successfully joined lobby: %s" % data.get("lobbyId"))
 					"player_joined":
 						print("Player %s joined the lobby" % data.get("connectionId"))
+						var player_id = data.get("playerId")
+						player_joined.emit(player_id)
 			"message":
 				print("Message from %s: %s" % [data.get("sender"), data.get("content")])
 			"position_update":

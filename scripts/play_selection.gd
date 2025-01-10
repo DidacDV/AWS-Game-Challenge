@@ -1,7 +1,7 @@
 extends Control
 
 
-var server_url = "wss://yi4wag7bw5.execute-api.us-east-1.amazonaws.com/production/"
+var server_url = "wss://khplzh5o84.execute-api.eu-west-3.amazonaws.com/production/"
 
 func _ready() -> void:	
 	WebSocketClientHandler.message_received.connect(_on_message_received)

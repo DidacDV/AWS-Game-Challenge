@@ -4,11 +4,16 @@ class_name WebSocketClient
 var socket = WebSocketPeer.new()
 var last_state = WebSocketPeer.STATE_CLOSED
 var json_parser = JSON.new()
+var lobbyId = ""
 
 signal connected_to_server()
 signal connection_closed()
 signal message_received(message: Variant)
+signal position_update(playerId: String, newPosition: Vector2)
 
+
+func _ready():
+	message_received.connect(_on_message_received)
 
 func poll() -> void:
 	if socket.get_ready_state() != socket.STATE_CLOSED:
@@ -22,13 +27,18 @@ func poll() -> void:
 		elif state == socket.STATE_CLOSED:
 			connection_closed.emit()
 	while socket.get_ready_state() == socket.STATE_OPEN and socket.get_available_packet_count():
+		print("message received!")
 		message_received.emit(get_message())
+		
 	
 func send(message) -> int:
 	if typeof(message) == TYPE_STRING:
-		return socket.send_text(message)
-	return socket.send(var_to_bytes(message))
-
+		return socket.send_text(message)  
+	elif typeof(message) == TYPE_DICTIONARY or typeof(message) == TYPE_ARRAY:
+		return socket.send_text(JSON.stringify(message)) 
+	else:
+		return socket.send_text(str(message)) 
+		
 func get_message() -> Variant:
 	if socket.get_available_packet_count() < 1:
 		return null
@@ -49,6 +59,7 @@ func connect_to_url(url) -> int:
 	return OK
 
 func close(code := 1000, reason := "") -> void:
+	print("closing....")
 	socket.close(code, reason)
 	last_state = socket.get_ready_state()
 
@@ -57,27 +68,41 @@ func get_socket() -> WebSocketPeer:
 	
 func _process(delta):
 	poll()
+	
+func setLobbyId(newId):
+	lobbyId = newId
 
 func create_lobby(lobby_id: String) -> void:
 	var message = {
-		"action": "create_lobby",
+		"action": "create_lobby",  # Changed to match Lambda
 		"lobbyId": lobby_id
-		}
+	}
 	send(message)
 
 func join_lobby(lobby_id: String) -> void:
 	var message = {
-		"action": "join_lobby",
+		"action": "join_lobby",  # Changed to match Lambda
 		"lobbyId": lobby_id
-		}
+	}
 	send(message)
 
-func send_lobby_message(lobby_id: String, message_payload: String) -> void:
+func send_lobby_message(message_content: String) -> void:
 	var message = {
-		"action": "send_message",
+		"action": "send_message",  # Changed to match Lambda
+		"lobbyId": lobbyId,
+		"message": message_content  # Changed from payload to message
+	}
+	send(message)
+
+func send_position(lobby_id: String, position: Vector2) -> void:
+	var message = {
+		"action": "update_position",
 		"lobbyId": lobby_id,
-		"payload": message_payload 
+		"position": {
+			"x": position.x,
+			"y": position.y
 		}
+	}
 	send(message)
 
 func _on_message_received(message: Variant) -> void:
@@ -85,13 +110,41 @@ func _on_message_received(message: Variant) -> void:
 	if typeof(message) == TYPE_DICTIONARY:
 		data = message
 	elif typeof(message) == TYPE_STRING:
-		var result = json_parser.parse(message)
-		if result.error == OK:
-			data = result.result
+		var error = json_parser.parse(message)
+		if error == OK:
+			data = json_parser.get_data()  # Get the parsed data
+			print("Parsed JSON data:", data)
+		else:
+			print("JSON parse error: ", error)
+			return
 	else:
 		data = null
 	
 	if data != null and typeof(data) == TYPE_DICTIONARY:
-		print("Received valid message: %s" % var_to_str(data))
+		print("Received message: %s" % var_to_str(data))
+		
+		# Handle different message types
+		match data.get("type"):
+			"connection":
+				if data.get("status") == "connected":
+					print("Successfully connected to server")
+			"lobby":
+				match data.get("status"):
+					"created":
+						print("Successfully created lobby: %s" % data.get("lobbyId"))
+					"joined":
+						print("Successfully joined lobby: %s" % data.get("lobbyId"))
+					"player_joined":
+						print("Player %s joined the lobby" % data.get("connectionId"))
+			"message":
+				print("Message from %s: %s" % [data.get("sender"), data.get("content")])
+			"position_update":
+				var player_id = data.get("playerId")
+				var pos = data.get("position")
+				if pos != null:
+					var position = Vector2(pos.x, pos.y)
+					position_update.emit(player_id,position)
+			"error":
+				print("Error: %s" % data.get("message"))
 	else:
 		print("Invalid message format: %s" % var_to_str(message))

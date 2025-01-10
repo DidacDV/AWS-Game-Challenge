@@ -305,4 +305,8 @@ libraries = {
 }
 autoplay = "move"
 
+[node name="RemotePlayer" parent="." instance=ExtResource("1_2j2ko")]
+position = Vector2(-96, 11)
+script = null
+
 [connection signal="body_entered" from="Coins/coin" to="Coins/coin" method="_on_body_entered"]

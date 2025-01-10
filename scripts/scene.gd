@@ -1,6 +1,6 @@
 extends Node2D
 
-var server_url = "ws://3.95.7.97:8080"
+var server_url = "wss://yi4wag7bw5.execute-api.us-east-1.amazonaws.com/production/"
 var messageToSend = ""
 @export var Player: PackedScene
 var remote_players = {}
@@ -10,8 +10,7 @@ func _ready() -> void:
 	WebSocketClientHandler.connected_to_server.connect(_on_websocket_client_connected_to_server)
 	WebSocketClientHandler.connection_closed.connect(_on_websocket_client_connection_close)
 	WebSocketClientHandler.message_received.connect(_on_message_received)
-	_connect_to_ws_server()
-	print("Tried connection")
+	WebSocketClientHandler.position_update.connect(_on_remote_player_position_update)
 	pass # Replace with function body.
 
 
@@ -24,9 +23,11 @@ func _input(event):
 	if event is InputEventKey:
 		if event.pressed:  # Check if the key is being pressed
 			match event.keycode:
-				KEY_ENTER:
-					var test = Player.instantiate() as CharacterBody2D
-					get_tree().current_scene.add_child.call_deferred(test)
+				KEY_Q:
+					print("Sending position")
+					var position = $Player.position
+					WebSocketClientHandler.send_position("test", position)
+
 	
 func _connect_to_ws_server():
 	var error = WebSocketClientHandler.connect_to_url(server_url)
@@ -48,3 +49,6 @@ func _on_web_socket_handler_connection_closed() -> void:
 func _on_message_received(Variant):
 	print(Variant)
 	
+func _on_remote_player_position_update(playerId: String, newPosition: Vector2):
+	print("Updating position")
+	$RemotePlayer.position = newPosition
